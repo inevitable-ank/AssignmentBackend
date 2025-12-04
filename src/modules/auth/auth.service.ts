@@ -38,7 +38,7 @@ export const registerUser = async (input: RegisterInput, sessionData?: SessionDa
 
   const token = jwt.sign(buildTokenPayload(user), env.JWT_SECRET, {
     expiresIn: env.JWT_EXPIRES_IN,
-  });
+  } as jwt.SignOptions);
 
   // Create session if device info provided
   if (sessionData) {
@@ -75,7 +75,7 @@ export const loginUser = async (input: LoginInput, sessionData?: SessionData) =>
 
   const token = jwt.sign(buildTokenPayload(user), env.JWT_SECRET, {
     expiresIn: env.JWT_EXPIRES_IN,
-  });
+  } as jwt.SignOptions);
 
   // Create session if device info provided
   if (sessionData) {
