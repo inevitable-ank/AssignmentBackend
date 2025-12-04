@@ -21,6 +21,21 @@ app.use(
 app.use(express.json());
 app.use(morgan("dev"));
 
+// Root route
+app.get("/", (_req, res) => {
+  res.json({
+    message: "TaskFlow API",
+    version: "1.0.0",
+    status: "running",
+    endpoints: {
+      health: "/api/health",
+      auth: "/api/auth",
+      tasks: "/api/tasks",
+      sessions: "/api/sessions",
+    },
+  });
+});
+
 app.get("/api/health", (_req, res) => {
   res.json({ status: "ok" });
 });
