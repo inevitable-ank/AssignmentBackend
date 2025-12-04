@@ -3,7 +3,6 @@ services:
     name: taskflow-backend
     env: node
     buildCommand: npm install --production=false && npm run build
-    preDeployCommand: npx prisma migrate deploy
     startCommand: npm start
     envVars:
       - key: NODE_ENV
