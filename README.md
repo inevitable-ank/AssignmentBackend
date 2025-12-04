@@ -585,30 +585,6 @@ curl -X GET http://localhost:4000/api/tasks \
 
 ---
 
-## 🚀 Deployment
-
-### Production Checklist
-
-- [ ] Set strong `JWT_SECRET` in production environment
-- [ ] Configure production `DATABASE_URL`
-- [ ] Set `NODE_ENV=production`
-- [ ] Enable HTTPS/SSL
-- [ ] Set appropriate `CORS_ORIGIN`
-- [ ] Run database migrations: `npx prisma migrate deploy`
-- [ ] Set up database backups
-- [ ] Configure monitoring and logging
-- [ ] Set up rate limiting (recommended)
-
-### Deployment Platforms
-
-- **Render** - Easy deployment with PostgreSQL addon
-- **Railway** - Automatic deployments from Git
-- **Heroku** - Classic PaaS with PostgreSQL support
-- **DigitalOcean App Platform** - Managed deployment
-- **AWS EC2/RDS** - Full control deployment
-
----
-
 ## 🤝 Contributing
 
 Contributions are welcome! Please follow these guidelines:
@@ -618,21 +594,6 @@ Contributions are welcome! Please follow these guidelines:
 3. Commit your changes (`git commit -m 'Add amazing feature'`)
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License.
-
----
-
-## 🙏 Acknowledgments
-
-- [Express](https://expressjs.com/) - Fast, unopinionated web framework
-- [Prisma](https://www.prisma.io/) - Next-generation ORM
-- [JWT](https://jwt.io/) - JSON Web Token standard
-- [TypeScript](https://www.typescriptlang.org/) - Typed JavaScript
 
 ---
 
