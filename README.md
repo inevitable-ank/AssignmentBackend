@@ -627,14 +627,6 @@ This project is licensed under the MIT License.
 
 ---
 
-## 👤 Author
-
-**Your Name**
-- GitHub: [@yourusername](https://github.com/yourusername)
-- Email: your.email@example.com
-
----
-
 ## 🙏 Acknowledgments
 
 - [Express](https://expressjs.com/) - Fast, unopinionated web framework
@@ -648,7 +640,7 @@ This project is licensed under the MIT License.
   
   **⭐ Star this repo if you find it helpful!**
   
-  Made with ❤️ by [Your Name]
+  Made with ❤️ and ☕
   
 </div>
 
