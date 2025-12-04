@@ -3,7 +3,7 @@ services:
     name: taskflow-backend
     env: node
     buildCommand: npm install --production=false && npm run build
-    startCommand: npm start
+    startCommand: npm run start:migrate
     envVars:
       - key: NODE_ENV
         value: production
