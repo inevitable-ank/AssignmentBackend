@@ -7,6 +7,7 @@ import { env } from "./config/env";
 import { errorHandler } from "./middleware/errorHandler";
 import authRouter from "./modules/auth/auth.routes";
 import tasksRouter from "./modules/tasks/tasks.routes";
+import sessionsRouter from "./modules/sessions/sessions.routes";
 
 const app = express();
 
@@ -26,6 +27,7 @@ app.get("/api/health", (_req, res) => {
 
 app.use("/api/auth", authRouter);
 app.use("/api/tasks", tasksRouter);
+app.use("/api/sessions", sessionsRouter);
 
 app.use(errorHandler);
 

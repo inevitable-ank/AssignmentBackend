@@ -15,7 +15,8 @@ model User {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  tasks Task[]
+  tasks    Task[]
+  sessions Session[]
 }
 
 enum TaskStatus {
@@ -50,6 +51,24 @@ model Task {
 
   user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId String
+}
+
+model Session {
+  id         String   @id @default(uuid())
+  token      String   @unique
+  device     String
+  browser    String?
+  os         String?
+  ipAddress  String?
+  location   String?
+  lastActive DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String
+
+  @@index([userId])
+  @@index([token])
 }
 
 

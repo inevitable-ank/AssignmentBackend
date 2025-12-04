@@ -1,9 +1,11 @@
 import type { Request, Response, NextFunction } from "express";
 import { registerUser, loginUser, getProfile, updateProfile, changePassword } from "./auth.service";
+import { extractDeviceInfo } from "../../utils/deviceInfo";
 
 export const registerHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await registerUser(req.body);
+    const deviceInfo = extractDeviceInfo(req);
+    const result = await registerUser(req.body, deviceInfo);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -12,7 +14,8 @@ export const registerHandler = async (req: Request, res: Response, next: NextFun
 
 export const loginHandler = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const result = await loginUser(req.body);
+    const deviceInfo = extractDeviceInfo(req);
+    const result = await loginUser(req.body, deviceInfo);
     res.status(200).json(result);
   } catch (err) {
     next(err);
