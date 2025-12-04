@@ -9,7 +9,6 @@
     "start": "node dist/server.js",
     "prisma:generate": "npx prisma generate",
     "prisma:migrate": "npx prisma migrate dev",
-    "postinstall": "npx prisma generate",
     "test": "echo \"No tests implemented yet\" && exit 0"
   },
   "dependencies": {
