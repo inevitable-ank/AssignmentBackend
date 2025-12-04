@@ -2,7 +2,7 @@ services:
   - type: web
     name: taskflow-backend
     env: node
-    buildCommand: npm run build
+    buildCommand: npx --yes prisma generate && npx tsc -p tsconfig.json
     startCommand: npm start
     envVars:
       - key: NODE_ENV
