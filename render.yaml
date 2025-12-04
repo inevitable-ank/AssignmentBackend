@@ -2,8 +2,7 @@ services:
   - type: web
     name: taskflow-backend
     env: node
-    buildCommand: npm install && npm run build
-    installCommand: npm ci
+    buildCommand: npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
