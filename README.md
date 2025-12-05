@@ -565,6 +565,218 @@ npx prisma generate
 
 ## 📝 Testing
 
+The backend uses **Jest** and **Supertest** for comprehensive API testing.
+
+### Running Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage report
+npm run test:coverage
+```
+
+### Test Structure
+
+```
+src/__tests__/
+├── modules/
+│   ├── auth.test.ts              # Authentication endpoint tests
+│   ├── tasks.test.ts             # Task CRUD operation tests
+│   └── sessions.test.ts          # Session management tests
+├── middleware/
+│   ├── auth.test.ts              # Authentication middleware tests
+│   ├── errorHandler.test.ts      # Error handling middleware tests
+│   └── validate.test.ts          # Request validation middleware tests
+├── utils/
+│   └── deviceInfo.test.ts        # Device detection utility tests
+├── helpers.ts                    # Test helper functions
+└── setup.ts                      # Test setup configuration
+```
+
+### Test Coverage
+
+#### 🔐 **Authentication Module** (`modules/auth.test.ts`)
+
+**POST /api/auth/register**:
+- ✅ Registers a new user successfully
+- ✅ Rejects registration with duplicate email (409)
+- ✅ Rejects registration with duplicate username (409)
+- ✅ Rejects registration with invalid email format (400)
+- ✅ Rejects registration with short password (< 8 chars) (400)
+- ✅ Rejects registration with short username (< 3 chars) (400)
+- ✅ Handles registration with maximum length username
+- ✅ Handles registration with special characters in username
+
+**POST /api/auth/login**:
+- ✅ Logs in with valid credentials
+- ✅ Rejects login with invalid email (401)
+- ✅ Rejects login with invalid password (401)
+- ✅ Rejects login with invalid email format (400)
+- ✅ Handles login with case-insensitive email
+
+**GET /api/auth/profile**:
+- ✅ Gets user profile with valid token
+- ✅ Rejects request without token (401)
+- ✅ Rejects request with invalid token (401)
+
+**PUT /api/auth/profile**:
+- ✅ Updates username successfully
+- ✅ Updates email successfully
+- ✅ Rejects update with duplicate email (409)
+- ✅ Rejects update without token (401)
+- ✅ Handles profile update with empty body (400)
+
+**PUT /api/auth/password**:
+- ✅ Changes password successfully
+- ✅ Verifies new password works after change
+- ✅ Rejects password change with incorrect current password (401)
+- ✅ Rejects password change with short new password (400)
+- ✅ Rejects password change without token (401)
+- ✅ Allows password change with same password (design decision)
+
+**Controller Guards**:
+- ✅ getProfileHandler returns 401 when user is missing
+- ✅ updateProfileHandler returns 401 when user is missing
+- ✅ changePasswordHandler returns 401 when user is missing
+
+#### 📋 **Tasks Module** (`modules/tasks.test.ts`)
+
+**GET /api/tasks**:
+- ✅ Gets empty tasks list for new user
+- ✅ Gets all tasks for authenticated user (user isolation)
+- ✅ Rejects request without token (401)
+- ✅ Verifies users can only see their own tasks
+
+**POST /api/tasks**:
+- ✅ Creates a new task successfully
+- ✅ Creates task with default values (status: pending, priority: medium, recurrence: none)
+- ✅ Rejects task creation without title (400)
+- ✅ Rejects task creation with empty title (400)
+- ✅ Rejects task creation with invalid status (400)
+- ✅ Rejects task creation without token (401)
+
+**PUT /api/tasks/:id**:
+- ✅ Updates task successfully
+- ✅ Updates only provided fields (partial update)
+- ✅ Rejects update of non-existent task (404)
+- ✅ Rejects update of other user's task (404 - user isolation)
+- ✅ Rejects update without token (401)
+
+**DELETE /api/tasks/:id**:
+- ✅ Deletes task successfully
+- ✅ Verifies deletion removes task from list
+- ✅ Rejects deletion of non-existent task (404)
+- ✅ Rejects deletion of other user's task (404 - user isolation)
+- ✅ Rejects deletion without token (401)
+
+**Edge Cases**:
+- ✅ Handles task with very long title (100+ chars)
+- ✅ Handles task with very long description (500+ chars)
+- ✅ Handles task update with all fields
+- ✅ Handles task with special characters in title
+- ✅ Handles multiple rapid task creations (concurrency)
+
+#### 🔒 **Sessions Module** (`modules/sessions.test.ts`)
+
+**GET /api/sessions**:
+- ✅ Gets all user sessions
+- ✅ Marks current session correctly
+- ✅ Rejects request without token (401)
+- ✅ Rejects request with invalid token (401)
+- ✅ Verifies session structure (id, device, lastActive, createdAt)
+
+**DELETE /api/sessions/:sessionId**:
+- ✅ Revokes a session successfully
+- ✅ Rejects revocation of non-existent session (404)
+- ✅ Rejects revocation without token (401)
+
+**POST /api/sessions/revoke-all**:
+- ✅ Revokes all other sessions successfully
+- ✅ Keeps current session active after revoke-all
+- ✅ Returns correct count of revoked sessions
+- ✅ Rejects request without token (401)
+
+**Controller Guards**:
+- ✅ getSessionsHandler returns 401 when user is missing
+- ✅ revokeSessionHandler returns 401 when user is missing
+- ✅ revokeAllOtherSessionsHandler returns 401 when token header missing
+
+#### 🛡️ **Authentication Middleware** (`middleware/auth.test.ts`)
+
+**requireAuth middleware**:
+- ✅ Allows access with valid token
+- ✅ Rejects request without Authorization header (401)
+- ✅ Rejects request with malformed Authorization header (401)
+- ✅ Rejects request with invalid token (401)
+- ✅ Rejects request with expired token (401)
+- ✅ Rejects request with token signed with wrong secret (401)
+- ✅ Protects all task routes (GET, POST, PUT, DELETE)
+
+#### ⚠️ **Error Handler Middleware** (`middleware/errorHandler.test.ts`)
+
+**Error Handling**:
+- ✅ Handles Zod validation errors (400)
+- ✅ Handles 404 errors (not found)
+- ✅ Handles 401 errors (unauthorized)
+- ✅ Handles 409 conflict errors (duplicate resources)
+- ✅ Handles 500 internal server errors gracefully
+
+#### ✅ **Validation Middleware** (`middleware/validate.test.ts`)
+
+**validateBody middleware**:
+- ✅ Validates request body against schema
+- ✅ Rejects invalid email format
+- ✅ Rejects short password
+- ✅ Rejects short username
+- ✅ Validates task creation schema
+- ✅ Rejects task creation without title
+- ✅ Rejects invalid task status
+
+#### 🔧 **Device Info Utility** (`utils/deviceInfo.test.ts`)
+
+**extractDeviceInfo function**:
+- ✅ Detects Edge on Windows with forwarded IP
+- ✅ Detects Safari on iOS Mobile
+- ✅ Falls back to Unknown when user-agent missing
+- ✅ Extracts IP address from x-forwarded-for header
+- ✅ Extracts IP address from request.ip
+
+### Test Statistics
+
+- **Total Test Files**: 7
+- **Test Categories**:
+  - Modules: 3 files (Auth, Tasks, Sessions)
+  - Middleware: 3 files (Auth, ErrorHandler, Validate)
+  - Utils: 1 file (DeviceInfo)
+
+### Testing Best Practices
+
+1. **Database Isolation**: Each test cleans the database before running (`cleanDatabase()`)
+2. **Test Users**: Helper functions create test users with proper authentication
+3. **Token Management**: Tests properly handle JWT tokens for authenticated requests
+4. **User Isolation**: Tests verify users can only access their own data
+5. **Error Scenarios**: Comprehensive coverage of error cases (400, 401, 404, 409, 500)
+6. **Edge Cases**: Tests handle boundary conditions and special characters
+7. **Concurrency**: Tests verify multiple rapid operations work correctly
+
+### Coverage Reports
+
+Coverage reports are generated in `backend/coverage/` directory after running:
+```bash
+npm run test:coverage
+```
+
+The coverage report includes:
+- Line coverage
+- Function coverage
+- Branch coverage
+- Statement coverage
+
 ### Manual Testing with cURL
 
 ```bash
