@@ -11,3 +11,5 @@ router.post("/revoke-all", requireAuth, revokeAllOtherSessionsHandler);
 
 export default router;
 
+
+

@@ -58,6 +58,11 @@ app.use("/api/auth", authRouter);
 app.use("/api/tasks", tasksRouter);
 app.use("/api/sessions", sessionsRouter);
 
+// Fallback 404 to ensure consistent error shape
+app.use((_req, res) => {
+  res.status(404).json({ message: "Not found" });
+});
+
 app.use(errorHandler);
 
 export default app;

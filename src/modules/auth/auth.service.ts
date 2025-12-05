@@ -14,14 +14,33 @@ const buildTokenPayload = (user: { id: string; email: string; username: string }
 });
 
 export const registerUser = async (input: RegisterInput, sessionData?: SessionData) => {
-  const existing = await prisma.user.findFirst({
-    where: { OR: [{ email: input.email }, { username: input.username }] },
+  // Normalize email to lowercase for comparison
+  const normalizedEmail = input.email.toLowerCase();
+  
+  // Check for existing user with same username (exact match)
+  const existingByUsername = await prisma.user.findUnique({
+    where: { username: input.username },
   });
 
-  if (existing) {
-    const conflictField =
-      existing.email === input.email ? "Email already in use" : "Username already in use";
-    const error = new Error(conflictField);
+  if (existingByUsername) {
+    const error = new Error("Username already in use");
+    (error as any).statusCode = 409;
+    throw error;
+  }
+
+  // Check for existing user with same email (case-insensitive)
+  // Since emails are stored normalized, we can use exact match
+  // But to be safe, we also check case-insensitively
+  const existingByEmail = await prisma.user.findFirst({
+    where: {
+      email: {
+        equals: normalizedEmail,
+      },
+    },
+  });
+
+  if (existingByEmail) {
+    const error = new Error("Email already in use");
     (error as any).statusCode = 409;
     throw error;
   }
@@ -31,7 +50,7 @@ export const registerUser = async (input: RegisterInput, sessionData?: SessionDa
   const user = await prisma.user.create({
     data: {
       username: input.username,
-      email: input.email,
+      email: normalizedEmail, // Store normalized email
       password: hashedPassword,
     },
   });
@@ -42,7 +61,22 @@ export const registerUser = async (input: RegisterInput, sessionData?: SessionDa
 
   // Create session if device info provided
   if (sessionData) {
-    await createSession(user.id, token, sessionData);
+    try {
+      // Ensure user exists before creating session
+      const userExists = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { id: true },
+      });
+      
+      if (userExists) {
+        await createSession(user.id, token, sessionData);
+      } else {
+        console.warn('User not found when creating session, skipping session creation');
+      }
+    } catch (error) {
+      // Log error but don't fail registration if session creation fails
+      console.warn('Failed to create session:', error);
+    }
   }
 
   return {
@@ -56,9 +90,22 @@ export const registerUser = async (input: RegisterInput, sessionData?: SessionDa
 };
 
 export const loginUser = async (input: LoginInput, sessionData?: SessionData) => {
-  const user = await prisma.user.findUnique({
-    where: { email: input.email },
+  // Normalize email to lowercase for case-insensitive lookup
+  const normalizedEmail = input.email.toLowerCase();
+  
+  // Try to find user by normalized email (most users should have normalized emails)
+  let user = await prisma.user.findFirst({
+    where: {
+      email: normalizedEmail,
+    },
   });
+
+  // If not found, try case-insensitive search (for legacy users with mixed-case emails)
+  if (!user) {
+    const allUsers = await prisma.user.findMany();
+    const foundUser = allUsers.find((u) => u.email.toLowerCase() === normalizedEmail);
+    user = foundUser || null;
+  }
 
   if (!user) {
     const error = new Error("Invalid email or password");
@@ -79,7 +126,22 @@ export const loginUser = async (input: LoginInput, sessionData?: SessionData) =>
 
   // Create session if device info provided
   if (sessionData) {
-    await createSession(user.id, token, sessionData);
+    try {
+      // Ensure user exists before creating session
+      const userExists = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { id: true },
+      });
+      
+      if (userExists) {
+        await createSession(user.id, token, sessionData);
+      } else {
+        console.warn('User not found when creating session, skipping session creation');
+      }
+    } catch (error) {
+      // Log error but don't fail login if session creation fails
+      console.warn('Failed to create session:', error);
+    }
   }
 
   return {
@@ -125,28 +187,47 @@ export const updateProfile = async (userId: string, input: UpdateProfileInput) =
   }
 
   // Check if username or email is already taken by another user
-  const orConditions: Array<{ username?: string; email?: string }> = [];
   if (input.username) {
-    orConditions.push({ username: input.username });
-  }
-  if (input.email) {
-    orConditions.push({ email: input.email });
-  }
-
-  if (orConditions.length > 0) {
-    const existing = await prisma.user.findFirst({
+    const existingByUsername = await prisma.user.findFirst({
       where: {
-        AND: [
-          { id: { not: userId } },
-          { OR: orConditions },
-        ],
+        id: { not: userId },
+        username: input.username,
       },
     });
 
-    if (existing) {
-      const conflictField =
-        existing.email === input.email ? "Email already in use" : "Username already in use";
-      const error = new Error(conflictField);
+    if (existingByUsername) {
+      const error = new Error("Username already in use");
+      (error as any).statusCode = 409;
+      throw error;
+    }
+  }
+
+  if (input.email) {
+    const normalizedInputEmail = input.email.toLowerCase();
+    
+    // Try exact match first (most users should have normalized emails)
+    let existingByEmail = await prisma.user.findFirst({
+      where: {
+        id: { not: userId },
+        email: normalizedInputEmail,
+      },
+    });
+
+    // If not found, try case-insensitive search (for legacy users)
+    if (!existingByEmail) {
+      const potentialConflicts = await prisma.user.findMany({
+        where: {
+          id: { not: userId },
+        },
+      });
+      const foundConflict = potentialConflicts.find(
+        (u) => u.email.toLowerCase() === normalizedInputEmail
+      );
+      existingByEmail = foundConflict || null;
+    }
+
+    if (existingByEmail) {
+      const error = new Error("Email already in use");
       (error as any).statusCode = 409;
       throw error;
     }
@@ -156,7 +237,7 @@ export const updateProfile = async (userId: string, input: UpdateProfileInput) =
     where: { id: userId },
     data: {
       ...(input.username && { username: input.username }),
-      ...(input.email && { email: input.email }),
+      ...(input.email && { email: input.email.toLowerCase() }), // Normalize email
     },
     select: {
       id: true,

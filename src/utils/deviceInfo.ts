@@ -21,11 +21,12 @@ export const extractDeviceInfo = (req: Request): DeviceInfo => {
 
   // Extract OS
   let os = "Unknown OS";
-  if (userAgent.includes("Windows")) os = "Windows";
+  // Check mobile identifiers before desktop ones to avoid "MacOS" for iPhone/iPad UA strings
+  if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
+  else if (userAgent.includes("Windows")) os = "Windows";
   else if (userAgent.includes("Mac")) os = "MacOS";
   else if (userAgent.includes("Linux")) os = "Linux";
   else if (userAgent.includes("Android")) os = "Android";
-  else if (userAgent.includes("iPhone") || userAgent.includes("iPad")) os = "iOS";
 
   // Create device string
   let device = `${browser} on ${os}`;
